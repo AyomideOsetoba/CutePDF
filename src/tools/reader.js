@@ -91,19 +91,20 @@ class Reader {
     this.searchBtn = iconButton('search', 'Search (Ctrl+F)', () => this.toggleSearch(true));
     this.moreBtn = iconButton('more', 'More options', (e) => this.showMenu(e.currentTarget));
     this.sideBtn = iconButton('sidebar', 'Pages, outline & notes', () => this.toggleSide());
+    for (const b of [this.saveBtn, this.searchBtn, this.sideBtn]) b.classList.add('r-doc-only');
 
     const top = h('div', { class: 'r-top' },
       iconButton('back', 'Back to all tools', () => { location.hash = '#/'; }),
       this.sideBtn,
       this.titleEl,
-      h('div', { class: 'r-pagenav' }, this.pageInput, this.pageTotal),
-      h('div', { class: 'r-sep r-hide-sm' }),
-      h('div', { class: 'r-zoom r-hide-sm' },
+      h('div', { class: 'r-pagenav r-doc-only' }, this.pageInput, this.pageTotal),
+      h('div', { class: 'r-sep r-hide-sm r-doc-only' }),
+      h('div', { class: 'r-zoom r-hide-sm r-doc-only' },
         iconButton('zoomOut', 'Zoom out (Ctrl −)', () => this.zoomBy(1 / 1.2)),
         this.zoomLabel,
         iconButton('zoomIn', 'Zoom in (Ctrl +)', () => this.zoomBy(1.2)),
       ),
-      h('div', { class: 'r-sep r-hide-sm' }),
+      h('div', { class: 'r-sep r-hide-sm r-doc-only' }),
       this.searchBtn,
       this.saveBtn,
       this.moreBtn,
@@ -175,6 +176,8 @@ class Reader {
   }
 
   showEmpty() {
+    this.el.classList.add('empty');
+    this.titleEl.replaceChildren(h('span', null, 'Reader'));
     this.toolsEl.classList.add('hidden');
     const dz = dropzone({
       title: 'Open a PDF to read',
@@ -228,6 +231,7 @@ class Reader {
       this.buildPages();
       this.fitWidth();
       this.toolsEl.classList.remove('hidden');
+      this.el.classList.remove('empty');
       this.observePages();
       if (startPage > 0) {
         requestAnimationFrame(() => this.goToPage(startPage, { smooth: false }));

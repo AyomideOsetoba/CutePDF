@@ -2,7 +2,7 @@
 body.reader-mode { overflow: hidden; }
 .reader {
   position: fixed; inset: 0;
-  display: grid; grid-template-rows: auto auto 1fr;
+  display: flex; flex-direction: column;
   background: var(--page-bg);
   --side-w: 270px;
   -webkit-user-select: none; user-select: none;
@@ -36,7 +36,10 @@ body.reader-mode { overflow: hidden; }
 .r-search .input { max-width: 380px; min-height: 36px; }
 .r-search .count { font-size: 13px; color: var(--muted); min-width: 80px; font-variant-numeric: tabular-nums; }
 
-.r-body { position: relative; display: flex; min-height: 0; }
+.r-body { position: relative; display: flex; flex: 1 1 auto; min-height: 0; }
+.r-top, .r-search { flex: none; }
+/* no document yet: hide the controls that need one */
+.reader.empty .r-side, .reader.empty .r-scrim, .reader.empty .r-doc-only { display: none !important; }
 .r-side {
   width: var(--side-w); flex: none; display: flex; flex-direction: column; min-height: 0;
   background: var(--surface); border-right: 1px solid var(--border);
