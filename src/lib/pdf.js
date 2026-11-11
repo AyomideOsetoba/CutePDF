@@ -70,14 +70,68 @@ export async function renderToCanvas(page, scale, { hiDpi = false, annotationMod
 }
 
 /** Small thumbnail canvas for page `n` (1-based). */
-export async function renderThumb(pdf, n, maxSize = 220) {
+/**
+ * Run thumbnail renders a couple at a time. Rendering even a tiny thumbnail
+ * decodes the page's full-resolution scan, so doing 20 at once (as soon as a
+ * page grid scrolls into view) would briefly need 20 × ~35 MB.
+ */
+const thumbJobs = [];
+let thumbActive = 0;
+export function queueThumb(fn) {
+  return new Promise((resolve, reject) => {
+    thumbJobs.push({ fn, resolve, reject });
+    pumpThumbs();
+  });
+}
+function pumpThumbs() {
+  while (thumbActive < 2 && thumbJobs.length) {
+    const { fn, resolve, reject } = thumbJobs.shift();
+    thumbActive++;
+    Promise.resolve()
+      .then(fn)
+      .then(resolve, reject)
+      .finally(() => {
+        thumbActive--;
+        pumpThumbs();
+      });
+  }
+}
+
+export function renderThumb(pdf, n, maxSize = 220) {
+  return queueThumb(() => renderThumbNow(pdf, n, maxSize));
+}
+
+async function renderThumbNow(pdf, n, maxSize) {
   const page = await pdf.getPage(n);
   const v = page.getViewport({ scale: 1 });
   const scale = Math.min(maxSize / v.width, maxSize / v.height) * Math.min(window.devicePixelRatio || 1, 2);
-  const { canvas } = await renderToCanvas(page, scale);
-  canvas.style.aspectRatio = `${v.width} / ${v.height}`;
+  const { canvas } = await renderToCanvas(page, scale, { annotationMode: AnnotationMode.DISABLE });
   page.cleanup();
-  return canvas;
+  const img = await canvasToImage(canvas);
+  img.style.aspectRatio = `${v.width} / ${v.height}`;
+  return img;
+}
+
+/**
+ * Turn a canvas into a small JPEG <img> and free the canvas. A thumbnail
+ * canvas holds ~0.5 MB of raw pixels; the JPEG is ~20 KB, which matters on
+ * phones when a document has hundreds of pages. Call releaseImage() when done.
+ */
+export async function canvasToImage(canvas, quality = 0.82) {
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+  const img = new Image();
+  img.decoding = 'async';
+  img.alt = '';
+  if (blob) {
+    img.src = URL.createObjectURL(blob);
+    img.dataset.blobUrl = img.src;
+  }
+  canvas.width = canvas.height = 0;
+  return img;
+}
+
+export function releaseImage(img) {
+  if (img?.dataset?.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
 }
 
 /**

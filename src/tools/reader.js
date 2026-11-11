@@ -1,6 +1,6 @@
 import '../styles/reader.css';
 import { h, icon, iconButton, button, toast, dropzone, downloadBlob, isPdf, readFile, segmented, modal } from '../lib/ui.js';
-import { openPdf, TextLayer, AnnotationMode, AnnotationType, closePdf } from '../lib/pdf.js';
+import { openPdf, TextLayer, AnnotationMode, AnnotationType, closePdf, canvasToImage, releaseImage, queueThumb } from '../lib/pdf.js';
 import { columnOrderedTextContent } from '../lib/textorder.js';
 import { PALETTE, uid, importPageAnnotations, exportAnnotatedPdf, annotationsToMarkdown, annotBounds, NOTE_SIZE } from '../lib/annotations.js';
 import { kvGet, kvSet, kvDelete, kvClear, lsGet, lsSet } from '../lib/store.js';
@@ -53,6 +53,7 @@ class Reader {
       side: prefs.side ?? !matchMedia('(max-width: 760px)').matches,
     };
     this.tool = 'select';
+    this.thumbCache = new Map(); // page index -> small JPEG thumbnail
     this.annots = [];
     this.undoStack = [];
     this.redoStack = [];
@@ -276,6 +277,8 @@ class Reader {
   closeDoc() {
     this.io?.disconnect();
     this.thumbIO?.disconnect();
+    for (const img of this.thumbCache.values()) releaseImage(img);
+    this.thumbCache.clear();
     for (const p of this.pages) p.renderTask?.cancel();
     this.textLayers?.clear();
     closePdf(this.pdf);
@@ -336,7 +339,7 @@ class Reader {
         else this.visible.delete(p);
       }
       this.scheduleRender();
-    }, { root: this.viewer, rootMargin: '120% 0px' });
+    }, { root: this.viewer, rootMargin: '60% 0px' });
     for (const p of this.pages) this.io.observe(p.el);
   }
 
@@ -352,9 +355,14 @@ class Reader {
         if (p.renderedScale !== this.scale && !p.rendering) this.renderPage(p);
         if (!p.textLayer && !p.textBuilding) this.buildTextLayer(p);
       }
-      // free memory of pages far away
+      // free memory of pages far away: their canvas, pdf.js' decoded images
+      // and (a bit further out) their invisible text layer
       const keep = new Set(vis);
-      for (const p of this.pages) if (p.canvas && !keep.has(p)) this.unrenderPage(p);
+      for (const p of this.pages) {
+        if (keep.has(p)) continue;
+        if (p.canvas) this.unrenderPage(p);
+        if (p.textLayer && Math.abs(p.index - cur) > 4) this.dropTextLayer(p);
+      }
     });
   }
 
@@ -410,6 +418,20 @@ class Reader {
     p.canvas = null;
     p.renderedScale = null;
     if (!p.el.querySelector('.r-ph')) p.el.prepend(h('div', { class: 'r-ph' }, String(p.index + 1)));
+    // pdf.js keeps decoded images (tens of MB per scanned page) until told otherwise
+    const pdf = this.pdf;
+    pdf?.getPage(p.index + 1).then((page) => {
+      if (this.pdf === pdf && !p.rendering) page.cleanup();
+    }).catch(() => {});
+  }
+
+  dropTextLayer(p) {
+    const sel = window.getSelection();
+    if (sel?.rangeCount && sel.getRangeAt(0).intersectsNode(p.textLayer)) return;
+    this.textLayers?.delete(p.textLayer);
+    p.textLayer.remove();
+    p.textLayer = null;
+    p.textDivs = null; // the extracted text itself stays cached for search
   }
 
   async getText(p) {
@@ -1371,13 +1393,27 @@ class Reader {
         const el = e.target;
         this.thumbIO.unobserve(el);
         const i = Number(el.dataset.index);
-        this.pdf?.getPage(i + 1).then(async (page) => {
+        const cached = this.thumbCache.get(i);
+        if (cached) {
+          el.querySelector('.tbox').replaceChildren(cached);
+          continue;
+        }
+        const pdf = this.pdf;
+        queueThumb(async () => {
+          if (this.pdf !== pdf) return null;
+          const page = await pdf.getPage(i + 1);
           const vp = page.getViewport({ scale: (150 / page.getViewport({ scale: 1 }).width) * Math.min(devicePixelRatio || 1, 2) });
           const c = document.createElement('canvas');
           c.width = Math.floor(vp.width);
           c.height = Math.floor(vp.height);
           await page.render({ canvasContext: c.getContext('2d'), canvas: c, viewport: vp, annotationMode: AnnotationMode.DISABLE }).promise;
-          el.querySelector('.tbox').replaceChildren(c);
+          if (!this.visible?.has(this.pages[i])) page.cleanup();
+          return canvasToImage(c);
+        }).then((img) => {
+          if (!img) return;
+          if (this.pdf !== pdf) return releaseImage(img);
+          this.thumbCache.set(i, img);
+          el.querySelector('.tbox').replaceChildren(img);
         }).catch(() => {});
       }
     }, { root: this.panel, rootMargin: '300px 0px' });

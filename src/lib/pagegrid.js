@@ -1,6 +1,6 @@
 // Visual grid of page thumbnails (used by Split and Organize).
 import { h, icon, iconButton, enableReorder } from './ui.js';
-import { renderThumb } from './pdf.js';
+import { renderThumb, releaseImage } from './pdf.js';
 
 /**
  * @param pdf       pdf.js document
@@ -10,7 +10,7 @@ import { renderThumb } from './pdf.js';
 export function pageGrid(pdf, { selectable = false, reorderable = false, rotatable = false, deletable = false, onChange } = {}) {
   const state = { pages: Array.from({ length: pdf.numPages }, (_, i) => ({ src: i, rotation: 0, deleted: false, selected: false })) };
   const grid = h('div', { class: 'page-grid' });
-  const thumbs = new Map(); // src -> canvas
+  const thumbs = new Map(); // src -> thumbnail <img>
   let lastClicked = null;
 
   const io = new IntersectionObserver((entries) => {
@@ -50,7 +50,7 @@ export function pageGrid(pdf, { selectable = false, reorderable = false, rotatab
     const box = h('div', { class: 'thumb' });
     const c = thumbs.get(p.src);
     if (c) {
-      box.append(c); // moves the canvas out of the old tile
+      box.append(c); // moves the image out of the old tile
       applyRotation(box, p.rotation);
     }
     const el = h('div', {
@@ -122,6 +122,7 @@ export function pageGrid(pdf, { selectable = false, reorderable = false, rotatab
     },
     destroy() {
       io.disconnect();
+      for (const img of thumbs.values()) releaseImage(img);
       stopReorder?.();
     },
   };

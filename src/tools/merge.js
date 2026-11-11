@@ -1,6 +1,6 @@
 import { h, button, iconButton, icon, dropzone, toast, downloadBlob, formatBytes, isPdf, readFile, enableReorder, parsePageRanges, progressBar } from '../lib/ui.js';
 import { resultCard, callout, errorText, openInReaderButton } from '../lib/toolkit.js';
-import { openPdf, renderThumb, closePdf } from '../lib/pdf.js';
+import { openPdf, renderThumb, closePdf, releaseImage } from '../lib/pdf.js';
 import { loadPdfLib, saveDoc } from '../lib/pdfdoc.js';
 import { embedImageFile, addImagePage } from '../lib/images.js';
 import { takePending } from '../lib/handoff.js';
@@ -91,6 +91,7 @@ export default {
           iconButton('up', 'Move up', () => move(i, -1), { cls: i === 0 ? 'hidden' : '' }),
           iconButton('trash', 'Remove', () => {
             if (it.url) URL.revokeObjectURL(it.url);
+            releaseImage(it.thumb);
             items.splice(i, 1);
             render();
           }),
@@ -156,7 +157,10 @@ export default {
 
     return () => {
       stopReorder();
-      for (const it of items) if (it.url) URL.revokeObjectURL(it.url);
+      for (const it of items) {
+        if (it.url) URL.revokeObjectURL(it.url);
+        releaseImage(it.thumb);
+      }
     };
   },
 };

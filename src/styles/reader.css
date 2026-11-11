@@ -53,7 +53,7 @@ body.reader-mode { overflow: hidden; }
 .r-thumbs { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .r-thumb { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 6px; border-radius: 10px; border: 2px solid transparent; width: 100%; }
 .r-thumb .tbox { width: 150px; display: grid; place-items: center; background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.18); border-radius: 2px; overflow: hidden; }
-.r-thumb .tbox canvas { width: 100%; height: auto; display: block; }
+.r-thumb .tbox canvas, .r-thumb .tbox img { width: 100%; height: auto; display: block; }
 .r-thumb span { font-size: 12px; color: var(--muted); font-weight: 600; }
 .r-thumb.current { border-color: var(--primary); background: var(--primary-soft); }
 .r-outline { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
