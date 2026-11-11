@@ -53,6 +53,8 @@ function header() {
 function footer() {
   return h('footer', { class: 'app-footer' },
     h('p', null, 'CutePDF runs entirely in your browser — no uploads, no accounts, no tracking. Works offline once loaded.'),
+    h('p', null, 'Made by ', h('a', { href: 'https://github.com/AyomideOsetoba', target: '_blank', rel: 'noopener noreferrer' }, 'Ayomide Osetoba'),
+      ' · ', h('a', { href: 'https://github.com/AyomideOsetoba/CutePDF', target: '_blank', rel: 'noopener noreferrer' }, 'Source code')),
   );
 }
 

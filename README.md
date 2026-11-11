@@ -1,6 +1,10 @@
 # CutePDF
 
-**Private PDF tools for researchers that run entirely in your browser.** Nothing is uploaded: files are opened by JavaScript in your tab, and the production build's Content-Security-Policy stops the page from contacting any server other than its own. CutePDF works on phones and desktops, and it can be installed as an app (PWA) that keeps working offline.
+**🌐 Use it now: [ayomideosetoba.github.io/CutePDF](https://ayomideosetoba.github.io/CutePDF/)**
+
+A private PDF toolkit for students and researchers: read and highlight papers, make scans searchable with column-aware OCR, compress, merge, split and convert PDFs — all on your own device.
+
+Everything runs entirely in your browser and nothing is uploaded: files are opened by JavaScript in your tab, and the production build's Content-Security-Policy stops the page from contacting any server other than its own. CutePDF works on phones and desktops, and it can be installed as an app (PWA) that keeps working offline.
 
 ## Tools
 
@@ -77,6 +81,10 @@ tests/                 node:test unit tests for the layout engine
 - PDF → Word focuses on text. Figures, tables and equations are not reproduced exactly.
 - Encrypted (permission-restricted) PDFs can be read, but can't be modified.
 - Very large files are limited by your device's memory, especially on phones.
+
+## Author
+
+Created and maintained by **[Ayomide Osetoba](https://github.com/AyomideOsetoba)**.
 
 ## Credits
 
