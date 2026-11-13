@@ -45,9 +45,15 @@ export class OcrPool {
       return w;
     };
     // first worker alone (downloads/compiles the engine once), the rest in parallel
-    const first = await make();
-    const rest = await Promise.all(Array.from({ length: this.size - 1 }, make));
-    this.workers = [first, ...rest];
+    try {
+      const first = await make();
+      const rest = await Promise.all(Array.from({ length: this.size - 1 }, make));
+      this.workers = [first, ...rest];
+    } catch (e) {
+      throw new Error(navigator.onLine
+        ? `Could not start the OCR engine (${e?.message || e}).`
+        : 'The OCR engine (about 8 MB) is downloaded the first time you use OCR. Connect to the internet once and run OCR; after that it also works offline.');
+    }
     this.free = [...this.workers];
   }
 

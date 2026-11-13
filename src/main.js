@@ -52,7 +52,7 @@ function header() {
 
 function footer() {
   return h('footer', { class: 'app-footer' },
-    h('p', null, 'CutePDF runs entirely in your browser — no uploads, no accounts, no tracking. Works offline once loaded.'),
+    h('p', null, 'CutePDF runs entirely in your browser — no uploads, no accounts, no tracking. Works offline after your first visit (OCR after its first use).'),
     h('p', null, 'Made by ', h('a', { href: 'https://github.com/AyomideOsetoba', target: '_blank', rel: 'noopener noreferrer' }, 'Ayomide Osetoba'),
       ' · ', h('a', { href: 'https://github.com/AyomideOsetoba/CutePDF', target: '_blank', rel: 'noopener noreferrer' }, 'Source code')),
   );
@@ -111,7 +111,7 @@ function home() {
         feature('shield', 'Private by design', 'Files are opened with JavaScript in this tab. No server ever sees them, so it is safe for unpublished work and reviews.'),
         feature('columns', 'Fixes two-column papers', 'Our layout engine finds column gutters, so selecting, copying, OCR and Word export follow the real reading order.'),
         feature('highlight', 'Real PDF annotations', 'Highlights, notes and drawings are saved as standard PDF annotations — they show up in Acrobat, Edge, Zotero and more.'),
-        feature('offline', 'Phone & desktop', 'Install it as an app from your browser menu. After the first visit it works without internet.'),
+        feature('offline', 'Phone & desktop', 'Install it as an app from your browser menu. After your first visit every tool works without internet; OCR needs one online run to download its engine.'),
       ),
     ),
     footer(),

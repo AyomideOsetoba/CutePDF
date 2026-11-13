@@ -56,9 +56,23 @@ export default defineConfig({
       workbox: {
         // App shell is precached. Big engines (OCR model, fonts, pdf.js data)
         // are cached the first time they are used, so they also work offline.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
-        globIgnores: ['vendor/**'],
+        // App code (incl. the pdf.js worker, which is an .mjs file) plus the
+        // small pdf.js support files that scanned PDFs need, so every tool
+        // except OCR works offline right after the first visit.
+        globPatterns: [
+          '**/*.{js,mjs,css,html,svg,png,ico,webmanifest}',
+          'vendor/pdfjs/standard_fonts/*.{pfb,ttf}',
+          'vendor/pdfjs/iccs/*.icc',
+          'vendor/pdfjs/wasm/{jbig2,openjpeg,qcms_bg}.wasm',
+        ],
+        // The OCR engine and model (~8 MB) and CJK font maps are cached the
+        // first time they are used instead.
+        globIgnores: ['vendor/tesseract/**', 'vendor/fonts/**', 'vendor/pdfjs/cmaps/**', 'vendor/pdfjs/wasm/*.js'],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // take over the page on the very first visit, so going offline right
+        // after opening the site still works
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: 'index.html',
         runtimeCaching: [
           {

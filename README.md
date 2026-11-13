@@ -4,7 +4,7 @@
 
 A private PDF toolkit for students and researchers: read and highlight papers, make scans searchable with column-aware OCR, compress, merge, split and convert PDFs — all on your own device.
 
-Everything runs entirely in your browser and nothing is uploaded: files are opened by JavaScript in your tab, and the production build's Content-Security-Policy stops the page from contacting any server other than its own. CutePDF works on phones and desktops, and it can be installed as an app (PWA) that keeps working offline.
+Everything runs entirely in your browser and nothing is uploaded: files are opened by JavaScript in your tab, and the production build's Content-Security-Policy stops the page from contacting any server other than its own. CutePDF works on phones and desktops, and it can be installed as an app (PWA). After the first visit every tool works offline; OCR downloads its ~8 MB engine on first use and then works offline too.
 
 ## Tools
 
